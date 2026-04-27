@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ปฏิทินความสะดวก</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&family=Kanit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --free: #0d9488;
+  --free-light: #f0fdf9;
+  --free-border: #5eead4;
+  --busy: #dc2626;
+  --busy-light: #fef2f2;
+  --busy-border: #fca5a5;
+  --event: #1d6fb8;
+  --event-light: #eff6ff;
+  --event-border: #93c5fd;
+  --locked: #64748b;
+  --locked-light: #f8fafc;
+  --neutral: #1e293b;
+  --bg: #f1f5f9;
+  --white: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --accent: #2563eb;
+  --admin-accent: #7c3aed;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Sarabun', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ===== ADMIN BANNER ===== */
+.admin-banner {
+  display: none;
+  background: var(--admin-accent);
+  color: #fff;
+  text-align: center;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+body.admin-mode .admin-banner { display: block; }
+
+/* ===== HEADER ===== */
+header {
+  background: var(--neutral);
+  color: #fff;
+  padding: 18px 24px 14px;
+  text-align: center;
+  position: relative;
+}
+header h1 {
+  font-family: 'Kanit', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 3px;
+}
+header p { font-size: 12px; opacity: 0.55; font-weight: 300; }
+
+.admin-badge {
+  display: none;
+  position: absolute;
+  top: 14px; right: 16px;
+  background: var(--admin-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 99px;
+  letter-spacing: 0.5px;
+}
+body.admin-mode .admin-badge { display: block; }
+
+/* ===== CONTAINER ===== */
+.container { max-width: 720px; margin: 0 auto; padding: 20px 14px 48px; }
+
+/* ===== NAME ROW ===== */
+.name-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+body.admin-mode .name-card { display: none; }
+
+.name-card label { font-size: 13px; font-weight: 500; white-space: nowrap; color: var(--muted); }
+.name-card input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: 'Sarabun', sans-serif;
+  outline: none;
+  color: var(--text);
+  background: var(--bg);
+}
+.name-card input:focus { border-color: var(--accent); background: #fff; }
+
+/* ===== LEGEND ===== */
+.legend {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.dot-free { background: var(--free); }
+.dot-busy { background: var(--busy); }
+.dot-event { background: var(--event); }
+.dot-locked { background: var(--locked); border: 1px solid #94a3b8; }
+
+/* ===== CALENDAR HEADER ===== */
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.month-label { font-family: 'Kanit', sans-serif; font-size: 17px; font-weight: 500; }
+.nav-btn {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 34px; height: 34px;
+  font-size: 17px;
+  cursor: pointer;
+  color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-btn:hover { background: #e2e8f0; }
+
+/* ===== GRID ===== */
+.grid-wrap {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.day-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: var(--neutral);
+}
+.day-lbl {
+  text-align: center;
+  padding: 8px 0;
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--border);
+}
+
+/* ===== CELL ===== */
+.cell {
+  background: var(--white);
+  min-height: 82px;
+  padding: 5px 4px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.1s;
+}
+.cell:hover { background: #f8fafc; }
+.cell.empty { background: #fafbfc; cursor: default; }
+.cell.is-event { background: var(--event-light); }
+.cell.is-event:hover { background: #dbeafe; }
+.cell.is-locked { background: var(--locked-light); cursor: not-allowed; }
+.cell.is-locked:hover { background: #f1f5f9; }
+body.admin-mode .cell.is-locked { cursor: pointer; }
+
+/* Event stripe on top */
+.cell.is-event::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--event);
+}
+
+.cell-num {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+.cell.today .cell-num { background: var(--accent); color: #fff; }
+.cell.is-event .cell-num { color: var(--event); }
+
+.event-name-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--event);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.lock-icon {
+  font-size: 9px;
+  color: var(--locked);
+  margin-bottom: 2px;
+  display: flex; align-items: center; gap: 3px;
+}
+.lock-icon span { font-size: 9px; color: var(--locked); }
+
+.cell-entries { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+.chip {
+  font-size: 9.5px;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  display: flex; align-items: center; gap: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chip.free { background: var(--free-light); color: var(--free); border: 1px solid var(--free-border); }
+.chip.busy { background: var(--busy-light); color: var(--busy); border: 1px solid var(--busy-border); }
+.chip-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.chip.free .chip-dot { background: var(--free); }
+.chip.busy .chip-dot { background: var(--busy); }
+.more { font-size: 9px; color: var(--muted); padding-left: 3px; margin-top: 1px; }
+
+/* ===== ADMIN TOOLBAR ===== */
+.admin-toolbar {
+  display: none;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+body.admin-mode .admin-toolbar { display: block; }
+
+.toolbar-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--admin-accent);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.toolbar-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.tool-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  font-family: 'Sarabun', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.12s;
+  display: flex; align-items: center; gap: 6px;
+}
+.tool-btn:hover { background: #f3e8ff; border-color: #c084fc; color: var(--admin-accent); }
+.tool-btn.active-tool { background: var(--admin-accent); color: #fff; border-color: var(--admin-accent); }
+.tool-hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+/* ===== OVERLAY / MODAL ===== */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.overlay.open { display: flex; }
+
+.modal {
+  background: var(--white);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 390px;
+  padding: 22px;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.2);
+  animation: slideUp 0.18s ease;
+}
+@keyframes slideUp { from { transform: translateY(16px); opacity:0; } to { transform: none; opacity:1; } }
+
+.modal-date {
+  font-family: 'Kanit', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.modal-event-badge {
+  display: inline-block;
+  background: var(--event-light);
+  color: var(--event);
+  border: 1px solid var(--event-border);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 99px;
+  margin-bottom: 12px;
+}
+
+.modal-entries { margin-bottom: 14px; }
+.modal-entry {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  font-size: 13px;
+  gap: 6px;
+}
+.modal-entry.free { background: var(--free-light); border: 1px solid var(--free-border); }
+.modal-entry.busy { background: var(--busy-light); border: 1px solid var(--busy-border); }
+.entry-left { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.entry-top { display: flex; align-items: center; gap: 6px; }
+.entry-name { font-weight: 500; font-size: 13px; }
+.status-lbl { font-size: 11px; font-weight: 600; }
+.modal-entry.free .status-lbl { color: var(--free); }
+.modal-entry.busy .status-lbl { color: var(--busy); }
+.entry-note { font-size: 11px; color: var(--muted); font-style: italic; }
+.del-btn {
+  border: none; background: none; cursor: pointer;
+  font-size: 13px; color: #cbd5e1; padding: 2px 4px; border-radius: 4px; flex-shrink: 0;
+}
+.del-btn:hover { color: var(--busy); background: var(--busy-light); }
+
+.no-entry { font-size: 13px; color: #cbd5e1; text-align: center; padding: 8px 0 4px; }
+.modal-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+.modal-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+
+.status-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.status-btn {
+  flex: 1; padding: 10px 0;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--white);
+  font-family: 'Sarabun', sans-serif;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.12s;
+  color: var(--muted);
+}
+.status-btn.sel-free { background: var(--free-light); border-color: var(--free); color: var(--free); }
+.status-btn.sel-busy { background: var(--busy-light); border-color: var(--busy); color: var(--busy); }
+
+.note-wrap { margin-bottom: 12px; display: none; }
+.note-wrap label { font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 5px; display: block; }
+.note-wrap textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 13px; resize: none; outline: none; color: var(--text); line-height: 1.5;
+}
+.note-wrap textarea:focus { border-color: var(--accent); }
+
+.modal-btns { display: flex; gap: 8px; }
+.btn-cancel {
+  flex: 1; padding: 10px 0;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--white); font-family: 'Sarabun', sans-serif;
+  font-size: 14px; cursor: pointer; color: var(--muted);
+}
+.btn-cancel:hover { background: var(--bg); }
+.btn-save {
+  flex: 2; padding: 10px 0; border: none; border-radius: 10px;
+  background: var(--neutral); color: #fff;
+  font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer;
+}
+.btn-save:hover { opacity: 0.88; }
+.btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== ADMIN EVENT MODAL ===== */
+.admin-section {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.admin-section-title {
+  font-size: 12px; font-weight: 600; color: var(--admin-accent);
+  letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 10px;
+}
+.field-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.field-group:last-child { margin-bottom: 0; }
+.field-group label { font-size: 12px; color: var(--muted); font-weight: 500; }
+.field-group input {
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 12px; font-family: 'Sarabun', sans-serif;
+  font-size: 14px; outline: none; color: var(--text); background: var(--white);
+}
+.field-group input:focus { border-color: var(--admin-accent); }
+
+.toggle-row { display: flex; gap: 8px; }
+.toggle-opt {
+  flex: 1; padding: 8px 0; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--white);
+  font-family: 'Sarabun', sans-serif; font-size: 13px;
+  cursor: pointer; text-align: center; color: var(--muted); transition: all 0.12s;
+}
+.toggle-opt.active { background: var(--admin-accent); color: #fff; border-color: var(--admin-accent); }
+
+.admin-action-btns { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.btn-admin-save {
+  flex: 1; padding: 9px 0; border: none; border-radius: 8px;
+  background: var(--admin-accent); color: #fff;
+  font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;
+  min-width: 100px;
+}
+.btn-admin-save:hover { opacity: 0.88; }
+.btn-admin-clear {
+  padding: 9px 14px; border-radius: 8px;
+  border: 1px solid var(--busy-border); background: var(--busy-light);
+  color: var(--busy); font-family: 'Sarabun', sans-serif; font-size: 13px; cursor: pointer;
+}
+.btn-admin-clear:hover { background: #fee2e2; }
+
+/* ===== LOCKED NOTICE ===== */
+.locked-notice {
+  background: var(--locked-light);
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--locked);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+/* ===== SUMMARY ===== */
+.summary {
+  margin-top: 18px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: none;
+}
+.summary h3 {
+  font-family: 'Kanit', sans-serif;
+  font-size: 14px; font-weight: 500;
+  margin-bottom: 12px; color: var(--neutral);
+}
+.person-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; gap: 12px;
+}
+.person-row:last-child { border-bottom: none; }
+.person-name { font-weight: 500; }
+.person-stats { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.stat-badge { padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+.badge-free { background: var(--free-light); color: var(--free); border: 1px solid var(--free-border); }
+.badge-busy { background: var(--busy-light); color: var(--busy); border: 1px solid var(--busy-border); }
+
+@media(max-width:480px){
+  .cell { min-height: 66px; }
+  .modal { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="admin-banner">⚙️ คุณกำลังอยู่ในโหมด Admin — สามารถจัดการปฏิทินได้ทุกอย่าง</div>
+
+<header>
+  <h1>📅 ปฏิทินความสะดวก</h1>
+  <p>กดวันที่เพื่อระบุสถานะของคุณ</p>
+  <div class="admin-badge">ADMIN</div>
+</header>
+
+<div class="container">
+
+  <div class="name-card">
+    <label>ชื่อของคุณ</label>
+    <input type="text" id="nameInput" placeholder="กรอกชื่อ..." maxlength="20"/>
+  </div>
+
+  <!-- Admin Toolbar -->
+  <div class="admin-toolbar">
+    <div class="toolbar-title">🛠 เครื่องมือ Admin</div>
+    <div class="toolbar-row">
+      <button class="tool-btn" id="toolEvent" onclick="setTool('event')">📌 กำหนดวันกิจกรรม</button>
+      <button class="tool-btn" id="toolLock" onclick="setTool('lock')">🔒 ล็อกวัน</button>
+      <button class="tool-btn" id="toolUnlock" onclick="setTool('unlock')">🔓 ปลดล็อก</button>
+      <button class="tool-btn" id="toolView" onclick="setTool('view')">👁 ดูรายการ</button>
+    </div>
+    <div class="tool-hint" id="toolHint">เลือกเครื่องมือ แล้วคลิกที่วันในปฏิทิน</div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-free"></span> สะดวก</div>
+    <div class="legend-item"><span class="dot dot-busy"></span> ไม่สะดวก</div>
+    <div class="legend-item"><span class="dot dot-event"></span> วันกิจกรรม</div>
+    <div class="legend-item"><span class="dot dot-locked"></span> ล็อก</div>
+  </div>
+
+  <div class="cal-header">
+    <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+    <span class="month-label" id="monthLabel"></span>
+    <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+  </div>
+
+  <div class="grid-wrap">
+    <div class="day-labels" id="dayLabels"></div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+  <div class="summary" id="summary">
+    <h3>สรุปผู้ลงตาราง</h3>
+    <div id="summaryList"></div>
+  </div>
+
+</div>
+
+<!-- User / View Modal -->
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-date" id="modalDate"></div>
+    <div id="modalEventBadge" style="display:none"></div>
+
+    <!-- Locked notice (user) -->
+    <div class="locked-notice" id="lockedNotice" style="display:none">
+      🔒 วันนี้ถูกล็อก ไม่สามารถลงสถานะได้
+    </div>
+
+    <div class="modal-entries" id="modalEntries"></div>
+    <hr class="modal-divider" id="modalDivider">
+
+    <!-- User entry section -->
+    <div id="userSection">
+      <div class="modal-subtitle">เพิ่มสถานะของคุณ</div>
+      <div class="status-row">
+        <button class="status-btn" id="btnFree" onclick="pickStatus('free')">✓ สะดวก</button>
+        <button class="status-btn" id="btnBusy" onclick="pickStatus('busy')">✕ ไม่สะดวก</button>
+      </div>
+      <div class="note-wrap" id="noteWrap">
+        <label>หมายเหตุ (ไม่สะดวกเพราะ…)</label>
+        <textarea id="noteInput" rows="2" placeholder="เช่น ติดประชุม, ลาหยุด..."></textarea>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">ปิด</button>
+        <button class="btn-save" onclick="saveEntry()">บันทึก</button>
+      </div>
+    </div>
+
+    <!-- Admin section inside modal -->
+    <div id="adminSection" style="display:none">
+      <div class="admin-section">
+        <div class="admin-section-title">⚙️ จัดการวันนี้</div>
+
+        <div class="field-group">
+          <label>ชื่อกิจกรรม (ถ้ามี)</label>
+          <input type="text" id="adminEventName" placeholder="เช่น ประชุมทีม, Workshop..."/>
+        </div>
+
+        <div class="field-group">
+          <label>สถานะวัน</label>
+          <div class="toggle-row">
+            <button class="toggle-opt" id="tEvent" onclick="pickDayType('event')">📌 กิจกรรม</button>
+            <button class="toggle-opt" id="tLock" onclick="pickDayType('locked')">🔒 ล็อก</button>
+            <button class="toggle-opt" id="tNormal" onclick="pickDayType('normal')">✕ ปกติ</button>
+          </div>
+        </div>
+
+        <div class="admin-action-btns">
+          <button class="btn-admin-save" onclick="saveAdminDay()">💾 บันทึก</button>
+          <button class="btn-admin-clear" onclick="clearAllEntries()">🗑 ล้างรายการทั้งหมด</button>
+        </div>
+      </div>
+
+      <!-- Admin can also delete individual entries -->
+      <div class="modal-subtitle" style="margin-top:4px">รายการที่ลง</div>
+      <div class="modal-entries" id="adminEntries"></div>
+
+      <div class="modal-btns" style="margin-top:12px">
+        <button class="btn-cancel" onclick="closeModal()">ปิด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const KEY = 'calv2_data';
+
+const today = new Date();
+let curYear = today.getFullYear();
+let curMonth = today.getMonth();
+let db = { entries: {}, days: {} }; // days[dateKey] = { type: 'event'|'locked'|'normal', name: '' }
+let selDate = null;
+let selStatus = null;
+let adminTool = 'view';
+let adminDayType = null;
+
+// Check admin mode
+const isAdmin = new URLSearchParams(location.search).get('admin') === 'true';
+if (isAdmin) document.body.classList.add('admin-mode');
+
+function load() {
+  try { const s = localStorage.getItem(KEY); if (s) db = JSON.parse(s); } catch(e){}
+  if (!db.entries) db.entries = {};
+  if (!db.days) db.days = {};
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e){} }
+
+function dk(y,m,d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+function changeMonth(dir) {
+  curMonth += dir;
+  if (curMonth < 0) { curMonth = 11; curYear--; }
+  if (curMonth > 11) { curMonth = 0; curYear++; }
+  render();
+}
+
+function setTool(t) {
+  adminTool = t;
+  ['toolEvent','toolLock','toolUnlock','toolView'].forEach(id => {
+    document.getElementById(id).classList.remove('active-tool');
+  });
+  const map = { event:'toolEvent', lock:'toolLock', unlock:'toolUnlock', view:'toolView' };
+  document.getElementById(map[t]).classList.add('active-tool');
+  const hints = {
+    event: 'คลิกวันที่ต้องการกำหนดเป็น "วันกิจกรรม" (สีฟ้า)',
+    lock: 'คลิกวันที่ต้องการล็อก — ผู้ใช้จะไม่สามารถลงสถานะได้',
+    unlock: 'คลิกวันที่ต้องการปลดล็อกหรือยกเลิกสถานะพิเศษ',
+    view: 'คลิกวันที่เพื่อดูรายละเอียดและจัดการรายการ'
+  };
+  document.getElementById('toolHint').textContent = hints[t];
+}
+
+function render() {
+  document.getElementById('monthLabel').textContent = `${MONTHS[curMonth]} ${curYear+543}`;
+  document.getElementById('dayLabels').innerHTML = DAYS.map(d=>`<div class="day-lbl">${d}</div>`).join('');
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  const firstDay = new Date(curYear, curMonth, 1).getDay();
+  const daysInMonth = new Date(curYear, curMonth+1, 0).getDate();
+
+  for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="cell empty"></div>`;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const k = dk(curYear, curMonth, d);
+    const entries = db.entries[k] || [];
+    const dayInfo = db.days[k] || {};
+    const isToday = d===today.getDate() && curMonth===today.getMonth() && curYear===today.getFullYear();
+    const isEvent = dayInfo.type === 'event';
+    const isLocked = dayInfo.type === 'locked';
+
+    let cls = 'cell';
+    if (isToday) cls += ' today';
+    if (isEvent) cls += ' is-event';
+    if (isLocked) cls += ' is-locked';
+
+    let inner = `<div class="cell-num">${d}</div>`;
+    if (isEvent && dayInfo.name) inner += `<div class="event-name-label">${dayInfo.name}</div>`;
+    if (isLocked) inner += `<div class="lock-icon">🔒 <span>ล็อก</span></div>`;
+
+    let chips = '';
+    entries.slice(0,3).forEach(e => {
+      chips += `<div class="chip ${e.status}"><span class="chip-dot"></span><span>${e.name}</span></div>`;
+    });
+    if (entries.length > 3) chips += `<div class="more">+${entries.length-3}</div>`;
+    inner += `<div class="cell-entries">${chips}</div>`;
+
+    grid.innerHTML += `<div class="${cls}" onclick="cellClick('${k}')">${inner}</div>`;
+  }
+  renderSummary();
+}
+
+function cellClick(k) {
+  if (isAdmin) {
+    // Admin: quick tools
+    if (adminTool === 'event') { quickAdminSet(k, 'event'); return; }
+    if (adminTool === 'lock')  { quickAdminSet(k, 'locked'); return; }
+    if (adminTool === 'unlock'){ quickAdminSet(k, 'normal'); return; }
+    // view => open full admin modal
+    openAdminModal(k);
+  } else {
+    openUserModal(k);
+  }
+}
+
+function quickAdminSet(k, type) {
+  if (type === 'normal') {
+    delete db.days[k];
+  } else {
+    if (!db.days[k]) db.days[k] = {};
+    db.days[k].type = type;
+    if (type === 'event' && !db.days[k].name) db.days[k].name = '';
+  }
+  save(); render();
+}
+
+// ======= USER MODAL =======
+function openUserModal(k) {
+  const dayInfo = db.days[k] || {};
+  const isLocked = dayInfo.type === 'locked';
+  selDate = k; selStatus = null;
+
+  document.getElementById('btnFree').className = 'status-btn';
+  document.getElementById('btnBusy').className = 'status-btn';
+  document.getElementById('noteWrap').style.display = 'none';
+  document.getElementById('noteInput').value = '';
+
+  const parts = k.split('-');
+  document.getElementById('modalDate').textContent =
+    `${parseInt(parts[2])} ${MONTHS[parseInt(parts[1])-1]} ${parseInt(parts[0])+543}`;
+
+  // Event badge
+  const badge = document.getElementById('modalEventBadge');
+  if (dayInfo.type === 'event') {
+    badge.style.display = 'block';
+    badge.innerHTML = `<span class="modal-event-badge">📌 ${dayInfo.name || 'วันกิจกรรม'}</span>`;
+  } else { badge.style.display = 'none'; }
+
+  // Lock
+  document.getElementById('lockedNotice').style.display = isLocked ? 'block' : 'none';
+  document.getElementById('userSection').style.display = isLocked ? 'none' : 'block';
+  document.getElementById('adminSection').style.display = 'none';
+  document.getElementById('modalDivider').style.display = isLocked ? 'none' : 'block';
+
+  renderUserEntries();
+  document.getElementById('overlay').classList.add('open');
+}
+
+function renderUserEntries() {
+  const entries = db.entries[selDate] || [];
+  const el = document.getElementById('modalEntries');
+  if (!entries.length) { el.innerHTML = `<div class="no-entry">ยังไม่มีผู้ลงสถานะ</div>`; return; }
+  el.innerHTML = entries.map((e,i) => `
+    <div class="modal-entry ${e.status}">
+      <div class="entry-left">
+        <div class="entry-top">
+          <span class="dot" style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:${e.status==='free'?'var(--free)':'var(--busy)'}"></span>
+          <span class="entry-name">${e.name}</span>
+          <span class="status-lbl">${e.status==='free'?'สะดวก':'ไม่สะดวก'}</span>
+        </div>
+        ${e.note?`<div class="entry-note">📝 ${e.note}</div>`:''}
+      </div>
+      <button class="del-btn" onclick="removeEntry(${i},'user')">✕</button>
+    </div>`).join('');
+}
+
+// ======= ADMIN MODAL =======
+function openAdminModal(k) {
+  selDate = k; selStatus = null; adminDayType = null;
+  const parts = k.split('-');
+  document.getElementById('modalDate').textContent =
+    `${parseInt(parts[2])} ${MONTHS[parseInt(parts[1])-1]} ${parseInt(parts[0])+543}`;
+  document.getElementById('modalEventBadge').style.display = 'none';
+  document.getElementById('lockedNotice').style.display = 'none';
+  document.getElementById('userSection').style.display = 'none';
+  document.getElementById('modalDivider').style.display = 'none';
+  document.getElementById('adminSection').style.display = 'block';
+  document.getElementById('modalEntries').innerHTML = '';
+
+  // Pre-fill
+  const dayInfo = db.days[k] || {};
+  document.getElementById('adminEventName').value = dayInfo.name || '';
+  ['tEvent','tLock','tNormal'].forEach(id => document.getElementById(id).classList.remove('active'));
+  if (dayInfo.type === 'event') { document.getElementById('tEvent').classList.add('active'); adminDayType = 'event'; }
+  else if (dayInfo.type === 'locked') { document.getElementById('tLock').classList.add('active'); adminDayType = 'locked'; }
+  else { document.getElementById('tNormal').classList.add('active'); adminDayType = 'normal'; }
+
+  renderAdminEntries();
+  document.getElementById('overlay').classList.add('open');
+}
+
+function renderAdminEntries() {
+  const entries = db.entries[selDate] || [];
+  const el = document.getElementById('adminEntries');
+  if (!entries.length) { el.innerHTML = `<div class="no-entry">ไม่มีรายการ</div>`; return; }
+  el.innerHTML = entries.map((e,i) => `
+    <div class="modal-entry ${e.status}">
+      <div class="entry-left">
+        <div class="entry-top">
+          <span class="entry-name">${e.name}</span>
+          <span class="status-lbl">${e.status==='free'?'สะดวก':'ไม่สะดวก'}</span>
+        </div>
+        ${e.note?`<div class="entry-note">📝 ${e.note}</div>`:''}
+      </div>
+      <button class="del-btn" onclick="removeEntry(${i},'admin')">🗑</button>
+    </div>`).join('');
+}
+
+function pickDayType(t) {
+  adminDayType = t;
+  ['tEvent','tLock','tNormal'].forEach(id => document.getElementById(id).classList.remove('active'));
+  const map = { event:'tEvent', locked:'tLock', normal:'tNormal' };
+  document.getElementById(map[t]).classList.add('active');
+}
+
+function saveAdminDay() {
+  const name = document.getElementById('adminEventName').value.trim();
+  if (!adminDayType || adminDayType === 'normal') {
+    delete db.days[selDate];
+  } else {
+    db.days[selDate] = { type: adminDayType, name };
+  }
+  save(); render(); closeModal();
+}
+
+function clearAllEntries() {
+  if (!confirm('ล้างรายการทั้งหมดในวันนี้ใช่ไหม?')) return;
+  delete db.entries[selDate];
+  save(); renderAdminEntries(); render();
+}
+
+function removeEntry(idx, mode) {
+  if (!db.entries[selDate]) return;
+  db.entries[selDate].splice(idx, 1);
+  if (!db.entries[selDate].length) delete db.entries[selDate];
+  save();
+  if (mode === 'admin') renderAdminEntries();
+  else renderUserEntries();
+  render();
+}
+
+function pickStatus(s) {
+  selStatus = s;
+  document.getElementById('btnFree').className = 'status-btn' + (s==='free'?' sel-free':'');
+  document.getElementById('btnBusy').className = 'status-btn' + (s==='busy'?' sel-busy':'');
+  document.getElementById('noteWrap').style.display = s==='busy' ? 'block' : 'none';
+  if (s==='free') document.getElementById('noteInput').value = '';
+}
+
+function saveEntry() {
+  const name = document.getElementById('nameInput').value.trim();
+  const note = document.getElementById('noteInput').value.trim();
+  if (!name || !selStatus) return;
+  if (!db.entries[selDate]) db.entries[selDate] = [];
+  const idx = db.entries[selDate].findIndex(e => e.name === name);
+  const entry = { name, status: selStatus, note: selStatus==='busy' ? note : '' };
+  if (idx >= 0) db.entries[selDate][idx] = entry;
+  else db.entries[selDate].push(entry);
+  save(); renderUserEntries(); render();
+  // reset
+  selStatus = null;
+  document.getElementById('btnFree').className = 'status-btn';
+  document.getElementById('btnBusy').className = 'status-btn';
+  document.getElementById('noteWrap').style.display = 'none';
+  document.getElementById('noteInput').value = '';
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function maybeClose(e) { if (e.target===document.getElementById('overlay')) closeModal(); }
+
+function renderSummary() {
+  const keys = Object.keys(db.entries);
+  if (!keys.length) { document.getElementById('summary').style.display='none'; return; }
+  const map = {};
+  keys.forEach(k => (db.entries[k]||[]).forEach(e => {
+    if (!map[e.name]) map[e.name] = { free:0, busy:0 };
+    map[e.name][e.status]++;
+  }));
+  const names = Object.entries(map);
+  document.getElementById('summaryList').innerHTML = names.map(([n,s]) =>
+    `<div class="person-row">
+      <span class="person-name">${n}</span>
+      <div class="person-stats">
+        ${s.free?`<span class="stat-badge badge-free">สะดวก ${s.free} วัน</span>`:''}
+        ${s.busy?`<span class="stat-badge badge-busy">ไม่สะดวก ${s.busy} วัน</span>`:''}
+      </div>
+    </div>`).join('');
+  document.getElementById('summary').style.display = 'block';
+}
+
+load(); render();
+if (isAdmin) setTool('view');
+</script>
+</body>
+</html>
